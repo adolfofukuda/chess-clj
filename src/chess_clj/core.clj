@@ -1,5 +1,6 @@
-(ns chess-clj.
-  (:use [clojure.contrib.string :only (lower-case)]))
+(ns chess-clj
+  (:use [clojure.contrib.string :only (lower-case)]
+        [clojure.contrib.math]))
 
 
 (def chessboard
@@ -58,4 +59,16 @@
         line (subs coordinate 1 2)]
     (str (inc-col col offset) line)))
 
+(defn vert [coordinate offset]
+  (let [col (subs coordinate 0 1)
+        line (read-string (subs coordinate 1 2))]
+    (str col (+ line offset))))
+
+(defn ldiag [coordinate offset]
+  (let [nc (* -1 (abs offset))]
+    (horiz (vert coordinate offset) nc)))
+
+(defn rdiag [coordinate offset]
+  (let [nc (abs offset)]
+    (horiz (vert coordinate offset) nc)))
 
