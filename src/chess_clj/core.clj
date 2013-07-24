@@ -1,5 +1,5 @@
 (ns chess-clj
-  (:use [clojure.contrib.string :only (lower-case)]
+  (:use [clojure.contrib.string]
         [clojure.contrib.math]))
 
 
@@ -71,4 +71,17 @@
 (defn rdiag [coordinate offset]
   (let [nc (abs offset)]
     (horiz (vert coordinate offset) nc)))
+
+(defn turn []
+  (if (odd? (count @movements))
+    "black"
+    "white"))
+
+(defn enemy-piece? [coordinate]
+  (let [piece (piece-at coordinate)
+        l (lower-case piece)
+        u (upper-case piece)]
+    (or
+       (and (= (turn) "white") (= piece l) (not (blank? piece)))
+       (and (= (turn) "black") (= piece u) (not (blank? piece))))))
 
