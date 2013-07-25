@@ -2,7 +2,6 @@
   (:use [clojure.contrib.string]
         [clojure.contrib.math]))
 
-
 (def chessboard
   "Initial board using algebric coordinates"
   (ref
@@ -44,8 +43,14 @@
 (defn piece-at [coordinate]
   (@chessboard (keyword coordinate)))
 
+(defn line [coordinate]
+  (read-string (subs coordinate 1 2)))
+
 (defn parse-move [move]
     (conj [] (subs move 0 2) (subs move 2 4)))
+
+(defn lazy-contains? [col key]
+ (boolean (some #{key} col)))
 
 (defn inc-col [col offset]
   (let [carac (+ offset (apply int (seq (lower-case col))))]
@@ -77,11 +82,31 @@
     "black"
     "white"))
 
+(defn white? [piece]
+  (and (= piece (upper-case piece)) (not (blank? piece))))
+
+(defn black? [piece]
+  (and (= piece (lower-case piece)) (not (blank? piece))))
+
 (defn enemy-piece? [coordinate]
-  (let [piece (piece-at coordinate)
-        l (lower-case piece)
-        u (upper-case piece)]
+  (let [piece (piece-at coordinate)]
     (or
-       (and (= (turn) "white") (= piece l) (not (blank? piece)))
-       (and (= (turn) "black") (= piece u) (not (blank? piece))))))
+       (and (= (turn) "white") (black? piece))
+       (and (= (turn) "black") (white? piece)))))
+
+(defn first-pawn-move? [coordinate]
+  (let [piece (piece-at coordinate)]
+    (or (and (white? piece) (= 2 (line coordinate)))
+        (and (black? piece) (= 7 (line coordinate))))))
+
+(defn pawn-move [coordinate]
+  (let [mov1 (conj [] (vert coordinate 1))
+        mov2 (conj [] (ldiag coordinate 1) (rdiag coordinate 1))
+        mov3 (conj [] (vert coordinate 2))]
+     (concat (filter #(blank? (piece-at %)) mov1)
+             (filter #(enemy-piece? %) mov2)
+             (filter #(and
+                      (blank? (piece-at %)) (first-pawn-move? coordinate)) mov3))))
+
+
 
