@@ -1,6 +1,7 @@
 (ns chess-clj
   (:use [clojure.contrib.string]
-        [clojure.contrib.math]))
+        [clojure.contrib.math]
+        [clojure.contrib.combinatorics]))
 
 (def chessboard
   "Initial board using algebric coordinates"
@@ -40,6 +41,11 @@
   (reset-moves)
   (init-chessboard))
 
+(contains? @chessboard :a1)
+
+(defn coordinate? [coordinate]
+  (contains? @chessboard (keyword coordinate)))
+
 (defn piece-at [coordinate]
   (@chessboard (keyword coordinate)))
 
@@ -55,8 +61,8 @@
 (defn inc-col [col offset]
   (let [carac (+ offset (apply int (seq (lower-case col))))]
     (cond
-       (< carac 97) "a"
-       (> carac 104) "h"
+       (< carac 97) ""
+       (> carac 104) ""
        :else (str (char carac)))))
 
 (defn horiz [coordinate offset]
@@ -108,5 +114,22 @@
              (filter #(and
                       (blank? (piece-at %)) (first-pawn-move? coordinate)) mov3))))
 
+(defn combination []
+  (filter (fn [x]
+     (not= (abs (first x)) (abs (second x)))) (combinations [-2 -1 1 2] 2)))
+(defn knight-combination []
+    (loop [c (combination) acum '()]
+      (if (empty? c)
+        acum
+        (let [l (permutations (first c))
+              a (first l)
+              b (second l)]
+        (recur (rest c) (conj acum a b ))))))
 
+(defn knight-move [coordinate]
+  (filter #(and (empty? (piece-at %)) (coordinate? %))
+          (map #(horiz (vert coordinate (first %)) (second %)) (knight-combination))))
+
+(init-game)
+(knight-move "g1")
 
