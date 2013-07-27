@@ -41,8 +41,6 @@
   (reset-moves)
   (init-chessboard))
 
-(contains? @chessboard :a1)
-
 (defn coordinate? [coordinate]
   (contains? @chessboard (keyword coordinate)))
 
@@ -117,6 +115,7 @@
 (defn combination []
   (filter (fn [x]
      (not= (abs (first x)) (abs (second x)))) (combinations [-2 -1 1 2] 2)))
+
 (defn knight-combination []
     (loop [c (combination) acum '()]
       (if (empty? c)
@@ -127,9 +126,34 @@
         (recur (rest c) (conj acum a b ))))))
 
 (defn knight-move [coordinate]
-  (filter #(and (empty? (piece-at %)) (coordinate? %))
+  (filter #(and
+            (or (empty? (piece-at %)) (enemy-piece? %)) (coordinate? %))
           (map #(horiz (vert coordinate (first %)) (second %)) (knight-combination))))
 
-(init-game)
-(knight-move "g1")
+(defn apply-move-func [func coordinate offset]
+  (loop [i offset acum '()]
+    (let [c (func coordinate i)]
+      (if (or (not (empty? (piece-at c))) (not (coordinate? c)))
+        (if (and (coordinate? c) (enemy-piece? c))
+          (cons c acum)
+          acum)
+        (if (< i 0)
+          (recur (dec i) (cons c acum))
+          (recur (inc i) (cons c acum)))))))
+
+(defn rook-move [coordinate]
+  (let [a (apply-move-func horiz coordinate 1)
+        b (apply-move-func horiz coordinate -1)
+        c (apply-move-func vert coordinate 1)
+        d (apply-move-func vert coordinate -1)]
+    (concat a b c d)))
+
+(defn bishop-move [coordinate]
+  (let [a (apply-move-func rdiag coordinate 1)
+        b (apply-move-func rdiag coordinate -1)
+        c (apply-move-func ldiag coordinate 1)
+        d (apply-move-func ldiag coordinate -1)]
+    (concat a b c d)))
+
+
 
