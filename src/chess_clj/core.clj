@@ -37,15 +37,15 @@
                            :a2 "P" :b2 "P" :c2 "P" :d2 "P" :e2 "P" :f2 "P" :g2 "P" :h2 "P"
                            :a1 "R" :b1 "N" :c1 "B" :d1 "Q" :e1 "K" :f1 "B" :g1 "N" :h1 "R")))
 
-(defn init-game []
-  (reset-moves)
-  (init-chessboard))
-
 (defn coordinate? [coordinate]
   (contains? @chessboard (keyword coordinate)))
 
 (defn piece-at [coordinate]
   (@chessboard (keyword coordinate)))
+
+(defn make-movement [collection]
+  (let [piece (piece-at (first collection))]
+    (dosync (alter chessboard assoc (keyword (first collection)) "" (keyword (second collection)) piece))))
 
 (defn line [coordinate]
   (read-string (subs coordinate 1 2)))
@@ -55,6 +55,7 @@
 
 (defn lazy-contains? [col key]
  (boolean (some #{key} col)))
+
 
 (defn inc-col [col offset]
   (let [carac (+ offset (apply int (seq (lower-case col))))]
@@ -81,6 +82,10 @@
   (let [nc (abs offset)]
     (horiz (vert coordinate offset) nc)))
 
+(defn combination []
+  (filter (fn [x]
+     (not= (abs (first x)) (abs (second x)))) (combinations [-2 -1 1 2] 2)))
+
 (defn turn []
   (if (odd? (count @movements))
     "black"
@@ -98,6 +103,22 @@
        (and (= (turn) "white") (black? piece))
        (and (= (turn) "black") (white? piece)))))
 
+(defn apply-move-func [func coordinate offset]
+  (loop [i offset acum '()]
+    (let [c (func coordinate i)]
+      (if (or (not (empty? (piece-at c))) (not (coordinate? c)))
+        (if (and (coordinate? c) (enemy-piece? c))
+          (cons c acum)
+          acum)
+        (if (< i 0)
+          (recur (dec i) (cons c acum))
+          (recur (inc i) (cons c acum)))))))
+
+; %%%%%%%%%%%%%%%%%%%%%%%%%% piece movements and rules %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+(defn init-game []
+  (reset-moves)
+  (init-chessboard))
+
 (defn first-pawn-move? [coordinate]
   (let [piece (piece-at coordinate)]
     (or (and (white? piece) (= 2 (line coordinate)))
@@ -111,10 +132,6 @@
              (filter #(enemy-piece? %) mov2)
              (filter #(and
                       (blank? (piece-at %)) (first-pawn-move? coordinate)) mov3))))
-
-(defn combination []
-  (filter (fn [x]
-     (not= (abs (first x)) (abs (second x)))) (combinations [-2 -1 1 2] 2)))
 
 (defn knight-combination []
     (loop [c (combination) acum '()]
@@ -130,17 +147,6 @@
             (or (empty? (piece-at %)) (enemy-piece? %)) (coordinate? %))
           (map #(horiz (vert coordinate (first %)) (second %)) (knight-combination))))
 
-(defn apply-move-func [func coordinate offset]
-  (loop [i offset acum '()]
-    (let [c (func coordinate i)]
-      (if (or (not (empty? (piece-at c))) (not (coordinate? c)))
-        (if (and (coordinate? c) (enemy-piece? c))
-          (cons c acum)
-          acum)
-        (if (< i 0)
-          (recur (dec i) (cons c acum))
-          (recur (inc i) (cons c acum)))))))
-
 (defn rook-move [coordinate]
   (let [a (apply-move-func horiz coordinate 1)
         b (apply-move-func horiz coordinate -1)
@@ -155,5 +161,9 @@
         d (apply-move-func ldiag coordinate -1)]
     (concat a b c d)))
 
+(defn queen-move [coordinate]
+  (concat (bishop-move coordinate)
+          (rook-move coordinate)))
 
+;(defn king-move)
 
