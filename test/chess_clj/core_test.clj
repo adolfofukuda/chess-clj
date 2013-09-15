@@ -1,18 +1,33 @@
 (ns chess-clj.core-test
   (:require [clojure.test :refer :all]
-            [chess-clj.core :refer :all]))
+            [chess-clj.core :refer :all]
+            [clojure.contrib.string :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(defn test-setup-fixture [f]
+  (init-game)
+  (f))
 
-(defmulti multi-fun
-  (fn [x y] (+ x y)))
-(defmethod multi-fun 3 [x y]
-  (print "Specialisation 3"))
-(defmethod multi-fun :default [x y]
-  (print "Generic " (+ x y)))
+(use-fixtures :once test-setup-fixture)
 
-(deftest defmul
-  (testing "teste" 
-           (is (= 3 (multi-fun 1 2)))))
+(defmulti write class)
+(defmethod write String [s]
+  (println s))
+(defmethod write nil [s]
+  (println "nil"))
+(defmethod write Number [n]
+  (println (str n)))
+(defmethod write java.util.Collection [c]
+  (print "(" )
+  (print (join " " c))
+  (print ")"))
+
+
+(deftest init-game-test
+  (testing "Testing init game"
+    (is (= (piece-at "e1") "K"))))
+
+(deftest white-knight-move
+  (testing "Testing all possible position of a Knight in b1"
+    (is (not (empty? (piece-move "b1"))))
+    (write (piece-move "b1"))))
+

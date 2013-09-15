@@ -186,8 +186,12 @@
 
 
 
-
-
+(defn -main
+  "The application's main function"
+  [& args]
+  (if args
+    (println (str "You passed in this value: " args))
+    (println (str "Testing..."))))
 
 
 
