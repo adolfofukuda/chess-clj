@@ -31,3 +31,4 @@
     (is (not (empty? (piece-move "b1"))))
     (write (piece-move "b1"))))
 
+
