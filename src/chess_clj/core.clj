@@ -1,4 +1,4 @@
-(ns chess-clj
+(ns chess-clj.core
   (:use [clojure.contrib.string]
         [clojure.contrib.math]
         [clojure.contrib.combinatorics]))
@@ -55,7 +55,6 @@
 
 (defn lazy-contains? [col key]
  (boolean (some #{key} col)))
-
 
 (defn inc-col [col offset]
   (let [carac (+ offset (apply int (seq (lower-case col))))]
@@ -114,24 +113,10 @@
           (recur (dec i) (cons c acum))
           (recur (inc i) (cons c acum)))))))
 
-; %%%%%%%%%%%%%%%%%%%%%%%%%% piece movements and rules %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-(defn init-game []
-  (reset-moves)
-  (init-chessboard))
-
 (defn first-pawn-move? [coordinate]
   (let [piece (piece-at coordinate)]
     (or (and (white? piece) (= 2 (line coordinate)))
         (and (black? piece) (= 7 (line coordinate))))))
-
-(defn pawn-move [coordinate]
-  (let [mov1 (conj [] (vert coordinate 1))
-        mov2 (conj [] (ldiag coordinate 1) (rdiag coordinate 1))
-        mov3 (conj [] (vert coordinate 2))]
-     (concat (filter #(blank? (piece-at %)) mov1)
-             (filter #(enemy-piece? %) mov2)
-             (filter #(and
-                      (blank? (piece-at %)) (first-pawn-move? coordinate)) mov3))))
 
 (defn knight-combination []
     (loop [c (combination) acum '()]
@@ -142,28 +127,68 @@
               b (second l)]
         (recur (rest c) (conj acum a b ))))))
 
-(defn knight-move [coordinate]
+(defn get-key [coordinate]
+  (-> coordinate piece-at lower-case))
+
+(defn u-case? [x]
+  (= x (upper-case x)))
+
+(defn same-color-piece? [piece coordinate]
+  (= (u-case? piece) (-> coordinate piece-at u-case?)))
+
+; %%%%%%%%%%%%%%%%%%%%%%%%%% piece movements and rules %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+(defn init-game []
+  (reset-moves)
+  (init-chessboard))
+
+(defmulti piece-move get-key)
+
+(defmethod piece-move "p" [coordinate]
+  (let [s   (if (-> coordinate piece-at white?) 1 -1)
+        d   (if (-> coordinate piece-at white?) 2 -2)
+        mov1 (conj [] (vert coordinate s))
+        mov2 (conj [] (ldiag coordinate s) (rdiag coordinate s))
+        mov3 (conj [] (vert coordinate d))]
+     (concat (filter #(blank? (piece-at %)) mov1)
+             (filter #(enemy-piece? %) mov2)
+             (filter #(and
+                      (blank? (piece-at %)) (first-pawn-move? coordinate)) mov3))))
+
+(defmethod piece-move "n" [coordinate]
   (filter #(and
-            (or (empty? (piece-at %)) (enemy-piece? %)) (coordinate? %))
+            (or (empty? (piece-at %)) (not (same-color-piece? (piece-at %) coordinate))) (coordinate? %) )
           (map #(horiz (vert coordinate (first %)) (second %)) (knight-combination))))
 
-(defn rook-move [coordinate]
+(defmethod piece-move "r" [coordinate]
   (let [a (apply-move-func horiz coordinate 1)
         b (apply-move-func horiz coordinate -1)
         c (apply-move-func vert coordinate 1)
         d (apply-move-func vert coordinate -1)]
     (concat a b c d)))
 
-(defn bishop-move [coordinate]
+(defmethod piece-move "b" [coordinate]
   (let [a (apply-move-func rdiag coordinate 1)
         b (apply-move-func rdiag coordinate -1)
         c (apply-move-func ldiag coordinate 1)
         d (apply-move-func ldiag coordinate -1)]
     (concat a b c d)))
 
-(defn queen-move [coordinate]
-  (concat (bishop-move coordinate)
-          (rook-move coordinate)))
+(defmethod piece-move "q" [coordinate]
+  (let [a (apply-move-func rdiag coordinate 1)
+        b (apply-move-func rdiag coordinate -1)
+        c (apply-move-func ldiag coordinate 1)
+        d (apply-move-func ldiag coordinate -1)
+        e (apply-move-func horiz coordinate 1)
+        f (apply-move-func horiz coordinate -1)
+        g (apply-move-func vert coordinate 1)
+        h (apply-move-func vert coordinate -1)]
+    (concat a b c d e f g h)))
 
-;(defn king-move)
+
+
+
+
+
+
+
 
