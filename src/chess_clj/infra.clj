@@ -142,3 +142,4 @@
   (or
    (and (= (turn) "white") (white? (piece-at coordinate)))
    (and (= (turn) "black") (black? (piece-at coordinate)))))
+

@@ -1,6 +1,7 @@
 (ns chess-clj.core-test
   (:require [clojure.test :refer :all]
             [chess-clj.core :refer :all]
+            [chess-clj.infra :refer :all]
             [clojure.contrib.string :refer :all]))
 
 (defn test-setup-fixture [f]
@@ -31,4 +32,7 @@
     (is (not (empty? (piece-move "b1"))))
     (write (piece-move "b1"))))
 
-
+(deftest move-test
+  (testing "Testing if chessboard has changed after a valid movement"
+    (move "e2-e4")
+    (is (blank? (piece-at "e2")))))
