@@ -8,14 +8,14 @@
 
 (defmulti piece-move get-key)
 
-(defmethod piece-move "p" [coordinate]
-  (let [s   (if (white? (piece-at coordinate)) 1 -1)
-        d   (if (white? (piece-at coordinate)) 2 -2)
+(defmethod piece-move "p" [chessboard coordinate]
+  (let [s   (if (white? (piece-at chessboard coordinate)) 1 -1)
+        d   (if (white? (piece-at chessboard coordinate)) 2 -2)
         mov1 (conj [] (vert coordinate s))
         mov2 (conj [] (ldiag coordinate s) (rdiag coordinate s))
         mov3 (conj [] (vert coordinate d))]
-     (concat (filter #(blank? (piece-at %)) mov1)
-             (filter #(and (coordinate? %) (enemy-piece? %)) mov2)
+     (concat (filter #(blank? (piece-at chessboard %)) mov1)
+             (filter #(and (coordinate? %) (enemy-piece? chessboard %)) mov2)
              (filter #(and
                       (blank? (piece-at %)) (first-pawn-move? coordinate)) mov3))))
 

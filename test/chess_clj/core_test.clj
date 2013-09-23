@@ -22,9 +22,12 @@
   (print ")"))
 
 
+
+
 (deftest init-game-test
   (testing "Testing init game"
     (is (= (piece-at "e1") "K"))))
+
 
 (deftest white-knight-move
   (testing "Testing all possible position of a Knight in b1"
