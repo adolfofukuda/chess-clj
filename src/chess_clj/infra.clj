@@ -117,3 +117,4 @@
     (or (and (white? piece) (= 2 (line coordinate)))
         (and (black? piece) (= 7 (line coordinate))))))
 
+
